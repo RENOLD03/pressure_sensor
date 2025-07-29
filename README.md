@@ -1,40 +1,52 @@
-# Pressure Sensor ROS 2 Node
+# Pressure Sensor (MS5837) ROS 2 Package
 
-This ROS 2 package reads data from the Blue Robotics Bar30 (MS5837-30BA) pressure sensor over I²C and publishes:
+This ROS 2 package interfaces with the **MS5837 pressure sensor** to provide:
 
-- Pressure (`/bar30/pressure`) — `sensor_msgs/FluidPressure`
-- Temperature (`/bar30/temperature`) — `sensor_msgs/Temperature`
-- Depth (`/bar30/depth`) — `std_msgs/Float32`
-- Altitude (`/bar30/altitude`) — `std_msgs/Float32`
+- Fluid pressure (`sensor_msgs/FluidPressure`)
+- Temperature (`sensor_msgs/Temperature`)
+- Depth and altitude (`std_msgs/Float32`)
+- Odometry (`nav_msgs/Odometry`) for EKF use, with **depth as negative z** (ROS convention)
 
+## Features
+
+- Publishes accurate depth and pressure data at 2Hz
+- Provides an odometry topic `depth_odom` for use with `robot_localization` EKF
+- Built for ROS 2 (tested on Humble and Rolling)
 
 ---
 
-## Detecting the Sensor (I²C Bus Check)
+## Nodes
 
-To verify the sensor is connected correctly via I²C:
+### `pressure_node`
 
-```bash
-sudo apt install i2c-tools
-i2cdetect -l               # Lists available I²C buses
-sudo i2cdetect -y 1        # Scan bus 1 (most common on Jetson)
+Publishes raw sensor readings:
+
+| Topic        | Message Type                 | Description                 |
+|--------------|------------------------------|-----------------------------|
+| `/pressure`  | `sensor_msgs/FluidPressure`  | Absolute fluid pressure     |
+| `/temperature` | `sensor_msgs/Temperature`  | Temperature in Celsius      |
+| `/depth`     | `std_msgs/Float32`           | Depth in meters             |
+| `/altitude`  | `std_msgs/Float32`           | Altitude above surface      |
+
 ---
 
-## Wiring
+### `depth_odom_node`
 
-| Sensor Wire | GPS_JET Pin | Signal |
-|-------------|-------------|--------|
-| Red         | 1           | 5V     |
-| Green       | 4           | SCL    |
-| White       | 5           | SDA    |
-| Black       | 6           | GND    |
+Publishes depth as `nav_msgs/Odometry`, with **negative Z** (required by EKF conventions):
 
-Make sure your device uses 3.3V I²C logic (Bar30 does).
+| Topic         | Message Type         | Description                          |
+|---------------|----------------------|--------------------------------------|
+| `/depth_odom` | `nav_msgs/Odometry`  | Depth in `pose.pose.position.z` (neg)|
 
-## Dependencies
+---
 
-Install dependencies:
+## Usage
+
+### 1. Clone and Build
 
 ```bash
-sudo apt install python3-smbus i2c-tools
-pip3 install ms5837
+cd ~/sensor/src
+git clone https://github.com/RENOLD03/pressure_sensor.git
+cd ..
+colcon build
+source install/setup.bash

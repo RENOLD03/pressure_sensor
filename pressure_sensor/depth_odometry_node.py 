@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Float32
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovariance, TwistWithCovariance, Point, Quaternion, Vector3
+from builtin_interfaces.msg import Time
+
+class DepthOdometryNode(Node):
+    def __init__(self):
+        super().__init__('depth_odometry_node')
+
+        self.odom_pub = self.create_publisher(Odometry, 'depth/odometry', 10)
+        self.depth_sub = self.create_subscription(Float32, 'depth', self.depth_callback, 10)
+
+        self.frame_id = 'odom'
+        self.child_frame_id = 'base_link'
+
+        self.get_logger().info('Depth Odometry node started.')
+
+    def depth_callback(self, msg: Float32):
+        odom_msg = Odometry()
+        odom_msg.header.stamp = self.get_clock().now().to_msg()
+        odom_msg.header.frame_id = self.frame_id
+        odom_msg.child_frame_id = self.child_frame_id
+
+        # Set Z-position as depth, X and Y = 0
+        odom_msg.pose.pose.position = Point(x=0.0, y=0.0, z=-msg.data)
+        odom_msg.pose.pose.orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+
+        # Fill covariance with reasonable low uncertainty (adjust if needed)
+        odom_msg.pose.covariance = [
+            0.01, 0, 0, 0, 0, 0,
+            0, 0.01, 0, 0, 0, 0,
+            0, 0, 0.01, 0, 0, 0,
+            0, 0, 0, 0.01, 0, 0,
+            0, 0, 0, 0, 0.01, 0,
+            0, 0, 0, 0, 0, 0.01
+        ]
+
+        # Twist is zero (we're not computing velocity)
+        odom_msg.twist = TwistWithCovariance()
+
+        self.odom_pub.publish(odom_msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = DepthOdometryNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
