@@ -1,4 +1,6 @@
 from setuptools import setup
+import os
+from glob import glob
 
 package_name = 'pressure_sensor'
 
@@ -8,6 +10,7 @@ setup(
     packages=[package_name],
     data_files=[
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

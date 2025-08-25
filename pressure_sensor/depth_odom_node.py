@@ -7,12 +7,12 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance, TwistWithCovariance, Point, Quaternion, Vector3
 from builtin_interfaces.msg import Time
 
-class DepthOdometryNode(Node):
+class DepthOdomNode(Node):
     def __init__(self):
-        super().__init__('depth_odometry_node')
+        super().__init__('depth_odom_node')
 
         self.odom_pub = self.create_publisher(Odometry, 'depth/odometry', 10)
-        self.depth_sub = self.create_subscription(Float32, 'depth', self.depth_callback, 10)
+        self.depth_sub = self.create_subscription(Float32, '/depth', self.depth_callback, 10)
 
         self.frame_id = 'odom'
         self.child_frame_id = 'base_link'
@@ -31,13 +31,13 @@ class DepthOdometryNode(Node):
 
         # Fill covariance with reasonable low uncertainty (adjust if needed)
         odom_msg.pose.covariance = [
-            0.01, 0, 0, 0, 0, 0,
-            0, 0.01, 0, 0, 0, 0,
-            0, 0, 0.01, 0, 0, 0,
-            0, 0, 0, 0.01, 0, 0,
-            0, 0, 0, 0, 0.01, 0,
-            0, 0, 0, 0, 0, 0.01
-        ]
+            0.01, 0.0,  0.0,  0.0,  0.0,  0.0,
+            0.0,  0.01, 0.0,  0.0,  0.0,  0.0,
+            0.0,  0.0,  0.01, 0.0,  0.0,  0.0,
+            0.0,  0.0,  0.0,  0.01, 0.0,  0.0,
+            0.0,  0.0,  0.0,  0.0,  0.01, 0.0,
+            0.0,  0.0,  0.0,  0.0,  0.0,  0.01
+            ]
 
         # Twist is zero (we're not computing velocity)
         odom_msg.twist = TwistWithCovariance()
@@ -46,7 +46,7 @@ class DepthOdometryNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = DepthOdometryNode()
+    node = DepthOdomNode()
     rclpy.spin(node)
     rclpy.shutdown()
 
